@@ -14,17 +14,30 @@ export function buildClassifierPrompt(params: {
     copy_excerpt: string;
     status: string;
   }>;
+  faqs: Array<{ id: string; question_pattern: string }>;
 }): string {
-  const { message, pieces } = params;
+  const { message, pieces, faqs } = params;
   return `<piezas_enviadas>
-${pieces
-  .map(
-    (p) =>
-      `Pieza ${p.position} (id: ${p.id}) — ${p.platform}/${p.format} — estado: ${p.status}
+${
+  pieces.length
+    ? pieces
+        .map(
+          (p) =>
+            `Pieza ${p.position} (id: ${p.id}) — ${p.platform}/${p.format} — estado: ${p.status}
   Extracto del copy: "${p.copy_excerpt}"`
-  )
-  .join('\n')}
+        )
+        .join('\n')
+    : 'No hay piezas pendientes de respuesta.'
+}
 </piezas_enviadas>
+
+<faqs_de_la_agencia>
+${
+  faqs.length
+    ? faqs.map((f) => `FAQ (id: ${f.id}): "${f.question_pattern}"`).join('\n')
+    : 'La agencia no tiene FAQs configuradas.'
+}
+</faqs_de_la_agencia>
 
 <mensaje_del_cliente>
 ${message}
@@ -34,18 +47,20 @@ ${message}
 Clasifica el mensaje del cliente en UNA de estas categorías:
 - "approved": aprueba una pieza o todas ("me gusta", "dale", "aprobado", "perfecto", "listo", 👍, etc.)
 - "change_requested": pide un cambio concreto a una pieza. Extrae QUÉ cambiar.
-- "rejected": rechaza una pieza por completo sin pedir cambio.
+- "rejected": rechaza una pieza por completo sin pedir un cambio concreto.
 - "question": hace una pregunta sobre las piezas o el servicio.
 - "unclear": no se entiende a qué se refiere o el mensaje es ambiguo.
 
-Si el mensaje refiere a una pieza específica (por número, plataforma o contenido), incluye su id. Si aplica a todas las piezas pendientes, usa "all". Si no se puede determinar, usa null.
+Si el mensaje refiere a una pieza específica (por número, plataforma o contenido), incluye su id exacto. Si aplica a todas las piezas pendientes, usa "all". Si no se puede determinar, usa null.
+
+Si es "question" y coincide claramente con alguna FAQ de la agencia, incluye su faq_id; si no coincide con ninguna, faq_id es null (NUNCA fuerces una coincidencia dudosa).
 
 Responde ÚNICAMENTE con este JSON:
 {
   "classification": "approved" | "change_requested" | "rejected" | "question" | "unclear",
   "piece_id": "<uuid>" | "all" | null,
-  "change_details": "<qué cambiar, en imperativo, solo si classification es change_requested>" | null,
-  "question_text": "<la pregunta reformulada, solo si classification es question>" | null
+  "change_details": "<qué cambiar, en imperativo>" | null,
+  "faq_id": "<uuid>" | null
 }
 </instrucciones>`;
 }
