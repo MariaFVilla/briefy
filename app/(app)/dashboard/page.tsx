@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getCurrentAgency } from '@/lib/data/agency';
 import { getWeekStart, formatDate } from '@/lib/utils';
 import { DashboardGrid, type ClientCardData } from '@/components/dashboard-grid';
+import { OnboardingChecklist } from '@/components/onboarding-checklist';
 import type { ContentBatch, EndClient, Piece } from '@/lib/types/database';
 
 export const dynamic = 'force-dynamic';
@@ -46,6 +47,30 @@ export default async function DashboardPage() {
     return { client, batch, pieces: batchPieces };
   });
 
+  // Onboarding guiado (cualquier semana, no solo la actual)
+  let hasBatch = false;
+  let hasApprovedInternal = false;
+  let hasSentToClient = false;
+  if (clientIds.length > 0) {
+    const { count: batchCount } = await supabase
+      .from('content_batches')
+      .select('id', { count: 'exact', head: true })
+      .in('end_client_id', clientIds);
+    hasBatch = (batchCount ?? 0) > 0;
+    const { count: approvedCount } = await supabase
+      .from('pieces')
+      .select('id, content_batches!inner(end_client_id)', { count: 'exact', head: true })
+      .in('content_batches.end_client_id', clientIds)
+      .not('internal_approved_by', 'is', null);
+    hasApprovedInternal = (approvedCount ?? 0) > 0;
+    const { count: sentCount } = await supabase
+      .from('pieces')
+      .select('id, content_batches!inner(end_client_id)', { count: 'exact', head: true })
+      .in('content_batches.end_client_id', clientIds)
+      .in('status', ['sent_to_client', 'client_approved', 'changes_requested', 'final']);
+    hasSentToClient = (sentCount ?? 0) > 0;
+  }
+
   return (
     <div>
       <div className="mb-8 flex items-center justify-between">
@@ -59,6 +84,15 @@ export default async function DashboardPage() {
           + Nuevo cliente
         </Link>
       </div>
+      <OnboardingChecklist
+        state={{
+          hasClients: cards.length > 0,
+          hasBatch,
+          hasApprovedInternal,
+          hasSentToClient,
+          whatsappConnected: current.agency.whatsapp_status === 'connected',
+        }}
+      />
       <DashboardGrid initialCards={cards} weekStart={weekStart} />
     </div>
   );

@@ -285,8 +285,22 @@ Deno.serve(async (req) => {
     if (body.agency_id) {
       agencyIds = [body.agency_id];
     } else if (body.all_agencies) {
-      const { data: agencies } = await supabase.from('agencies').select('id');
-      agencyIds = (agencies ?? []).map((a: { id: string }) => a.id);
+      const { data: agencies } = await supabase.from('agencies').select('id, timezone');
+      let list = agencies ?? [];
+      // Cron: solo agencias donde la hora local coincide (lunes 6am hora de la agencia)
+      if (typeof body.local_hour === 'number') {
+        list = list.filter((a: { timezone: string }) => {
+          const localHour = Number(
+            new Intl.DateTimeFormat('en-US', {
+              timeZone: a.timezone || 'America/Bogota',
+              hour: 'numeric',
+              hour12: false,
+            }).format(new Date())
+          );
+          return localHour === body.local_hour;
+        });
+      }
+      agencyIds = list.map((a: { id: string }) => a.id);
     } else {
       return jsonResponse({ error: 'Indica end_client_id, agency_id, all_agencies o piece_id' }, 400);
     }
