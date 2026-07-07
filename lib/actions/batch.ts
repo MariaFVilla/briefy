@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { waitUntil } from '@vercel/functions';
 import { createClient } from '@/lib/supabase/server';
 import { getCurrentAgency } from '@/lib/data/agency';
 import { invokeEdgeFunction } from '@/lib/actions/edge';
@@ -30,14 +31,18 @@ async function assertOwnsPiece(pieceId: string): Promise<{ endClientId: string }
 
 export async function generateBatch(endClientId: string) {
   await assertOwnsClient(endClientId);
-  const result = await invokeEdgeFunction<{ batch_id?: string; error?: string }>(
-    'producer',
-    { end_client_id: endClientId }
+  // La generación tarda 1-2 min y excede el límite de las server actions de
+  // Vercel: waitUntil mantiene viva la invocación mientras respondemos ya.
+  // La pantalla del batch se auto-refresca hasta que aparecen las piezas.
+  waitUntil(
+    invokeEdgeFunction<{ batch_id?: string; error?: string }>('producer', {
+      end_client_id: endClientId,
+    }).catch((err) => console.error('[producer]', err))
   );
   revalidatePath(`/clients/${endClientId}`);
   revalidatePath(`/clients/${endClientId}/batch`);
   revalidatePath('/dashboard');
-  return result;
+  return { started: true };
 }
 
 export async function regeneratePieceWithInstruction(pieceId: string, instruction: string) {

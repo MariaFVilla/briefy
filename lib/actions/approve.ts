@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { waitUntil } from '@vercel/functions';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { invokeEdgeFunction } from '@/lib/actions/edge';
 
@@ -33,27 +34,34 @@ export async function respondToPieceByToken(
   const endClientId = await resolveEndClientId(token);
 
   if (endClientId) {
+    // waitUntil: en Vercel una promesa suelta muere al responder; así el
+    // Aprendiz y la regeneración terminan aunque ya respondimos al cliente.
     if (action === 'approve') {
-      // Aprendizaje por aprobación (fire-and-forget: no bloquea la respuesta al cliente).
-      invokeEdgeFunction('learn-from-feedback', {
-        end_client_id: endClientId,
-        feedback_type: 'approval',
-        feedback_text: 'El cliente aprobó la pieza sin cambios.',
-        piece_id: pieceId,
-      }).catch((err) => console.error('[learn-from-feedback]', err));
+      waitUntil(
+        invokeEdgeFunction('learn-from-feedback', {
+          end_client_id: endClientId,
+          feedback_type: 'approval',
+          feedback_text: 'El cliente aprobó la pieza sin cambios.',
+          piece_id: pieceId,
+        }).catch((err) => console.error('[learn-from-feedback]', err))
+      );
     } else if (comment?.trim()) {
       // Aprendizaje por comentario + regeneración automática de la pieza
       // (la pieza regenerada vuelve a revisión interna — human-in-the-loop).
-      invokeEdgeFunction('learn-from-feedback', {
-        end_client_id: endClientId,
-        feedback_type: 'comment',
-        feedback_text: comment,
-        piece_id: pieceId,
-      }).catch((err) => console.error('[learn-from-feedback]', err));
-      invokeEdgeFunction('producer', {
-        piece_id: pieceId,
-        instruction: comment,
-      }).catch((err) => console.error('[producer regenerate]', err));
+      waitUntil(
+        invokeEdgeFunction('learn-from-feedback', {
+          end_client_id: endClientId,
+          feedback_type: 'comment',
+          feedback_text: comment,
+          piece_id: pieceId,
+        }).catch((err) => console.error('[learn-from-feedback]', err))
+      );
+      waitUntil(
+        invokeEdgeFunction('producer', {
+          piece_id: pieceId,
+          instruction: comment,
+        }).catch((err) => console.error('[producer regenerate]', err))
+      );
     }
   }
 

@@ -5,6 +5,7 @@ import { getWeekStart, formatDate } from '@/lib/utils';
 import { BatchStatusBadge } from '@/components/status-badge';
 import { PieceCard } from '@/components/piece-card';
 import { SendToClientButton } from '@/components/send-to-client-button';
+import { AutoRefresh } from '@/components/auto-refresh';
 import type {
   ContentBatch,
   EndClient,
@@ -13,6 +14,8 @@ import type {
 } from '@/lib/types/database';
 
 export const dynamic = 'force-dynamic';
+// Regenerar pieza / enviar por WhatsApp esperan Edge Functions de Supabase.
+export const maxDuration = 60;
 
 export default async function BatchPage({
   params,
@@ -89,17 +92,20 @@ export default async function BatchPage({
         )}
       </div>
 
+      {/* Mientras el producer corre en Supabase, la página se refresca sola */}
+      {(!batch || batch.status === 'generating') && <AutoRefresh />}
+
       {!batch ? (
         <div className="card px-8 py-16 text-center text-sm text-slate-500">
-          No hay batch para esta semana.{' '}
+          No hay batch para esta semana todavía. Si acabas de generarlo, las piezas
+          aparecerán aquí solas en 1-2 minutos.{' '}
           <Link href={`/clients/${params.id}`} className="text-indigo-600">
-            Genera uno desde el perfil del cliente
+            Volver al perfil del cliente
           </Link>
-          .
         </div>
       ) : pieces.length === 0 ? (
         <div className="card px-8 py-16 text-center text-sm text-slate-500">
-          El batch se está generando… Las piezas aparecerán aquí en 1-2 minutos.
+          ⏳ El batch se está generando… Las piezas aparecerán aquí solas en 1-2 minutos.
         </div>
       ) : (
         <div className="space-y-6">

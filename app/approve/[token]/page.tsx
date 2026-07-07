@@ -6,6 +6,8 @@ import { formatDate } from '@/lib/utils';
 import type { PublicBatchView } from '@/lib/types/database';
 
 export const dynamic = 'force-dynamic';
+// Las respuestas del cliente disparan learn-from-feedback/regeneración vía waitUntil.
+export const maxDuration = 60;
 
 export async function generateMetadata({ params }: { params: { token: string } }) {
   try {

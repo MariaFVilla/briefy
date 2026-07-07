@@ -19,6 +19,8 @@ export function GenerateBatchButton({
     setError(null);
     startTransition(async () => {
       try {
+        // La action responde de inmediato; la generación sigue en Supabase
+        // y la pantalla del batch se auto-refresca hasta ver las piezas.
         await generateBatch(endClientId);
         router.push(`/clients/${endClientId}/batch`);
         router.refresh();
@@ -36,7 +38,7 @@ export function GenerateBatchButton({
         className="btn-primary"
         title={hasCurrentBatch ? 'Esta semana ya tiene batch' : undefined}
       >
-        {pending ? 'Generando… (puede tardar 1-2 min)' : '⚡ Generar batch semanal'}
+        {pending ? 'Iniciando generación…' : '⚡ Generar batch semanal'}
       </button>
       {error && <p className="mt-2 max-w-xs text-xs text-red-600">{error}</p>}
     </div>
