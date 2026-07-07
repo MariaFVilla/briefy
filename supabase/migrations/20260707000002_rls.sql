@@ -310,6 +310,15 @@ begin
      coalesce(comment, case when action = 'approve' then 'Aprobada desde link web' else '' end),
      case when action = 'approve' then 'approved' else 'change_requested' end);
 
+  -- Si ya no quedan piezas esperando al cliente, el batch se completa.
+  if not exists (
+    select 1 from public.pieces
+    where batch_id = batch.id
+      and status in ('sent_to_client', 'changes_requested', 'regenerating')
+  ) then
+    update public.content_batches set status = 'completed' where id = batch.id;
+  end if;
+
   return jsonb_build_object('ok', true, 'piece_id', piece.id, 'action', action);
 end;
 $$;
