@@ -50,9 +50,21 @@ cliente final nunca sabe que Briefy existe.
    npx supabase functions deploy messenger-webhook --no-verify-jwt
    ```
 5. Cron semanal (lunes 6am hora de cada agencia): abre `supabase/cron_setup.sql`,
-   reemplaza los placeholders y ejecútalo en el SQL Editor.
-6. (Opcional, demo) Ejecuta `supabase/seed.sql` en el SQL Editor →
-   usuario `demo@briefy.app` / `demo12345` con 3 clientes de ejemplo.
+   reemplaza los placeholders y ejecútalo:
+   ```bash
+   npx supabase db query --linked -f supabase/cron_setup.sql
+   ```
+6. (Opcional, demo) Datos de demo — 3 pasos, en este orden:
+   ```bash
+   # 1. Crear el usuario demo vía Admin API (NO por SQL: corrompe GoTrue)
+   curl -X POST "https://TU_PROJECT_REF.supabase.co/auth/v1/admin/users" \
+     -H "apikey: SERVICE_ROLE_KEY" -H "Authorization: Bearer SERVICE_ROLE_KEY" \
+     -H "Content-Type: application/json" \
+     -d '{"email":"demo@briefy.app","password":"demo12345","email_confirm":true,"user_metadata":{"agency_name":"Impulso Creativo"}}'
+   # 2. Cargar clientes/perfiles/learnings de demo
+   npx supabase db query --linked -f supabase/seed.sql
+   ```
+   → usuario `demo@briefy.app` / `demo12345` con 3 clientes de ejemplo.
 
 ### 2. Frontend
 
