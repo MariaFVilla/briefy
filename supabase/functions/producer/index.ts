@@ -18,18 +18,24 @@ import {
 import { getAdminClient, jsonResponse, corsHeaders } from '../_shared/supabase.ts';
 import {
   PRODUCER_SYSTEM,
-  buildProducerPrompt,
+  buildPlanPrompt,
+  buildPiecePrompt,
   buildRegeneratePrompt,
   type ProducerProfileInput,
 } from '../_shared/prompts/producer.ts';
 
-const MAX_TOKENS_PER_PIECE = 1200; // control de costos: presupuesto acotado por pieza
-const BASE_MAX_TOKENS = 2000;
-const MAX_WEB_SEARCHES = 3;
+const MAX_TOKENS_PER_PIECE = 1300; // control de costos: presupuesto acotado por pieza
+const PLAN_MAX_TOKENS = 1500;
+const MAX_WEB_SEARCHES = 2;
 
-interface GeneratedPiece {
+interface PlanItem {
   platform: string;
   format: string;
+  theme: string;
+  angle: string;
+}
+
+interface GeneratedPiece {
   copy_text: string;
   visual_brief: string;
   strategic_argument: string;
@@ -130,9 +136,11 @@ async function generateBatchForClient(supabase: any, endClientId: string, weekSt
   }
 
   const anthropic = getAnthropicClient();
-  const response = await anthropic.messages.create({
+
+  // Etapa 1: tendencias (web search) + plan semanal. Una sola llamada corta.
+  const planResponse = await anthropic.messages.create({
     model: CLAUDE_MODEL,
-    max_tokens: BASE_MAX_TOKENS + MAX_TOKENS_PER_PIECE * piecesCount,
+    max_tokens: PLAN_MAX_TOKENS,
     system: PRODUCER_SYSTEM,
     tools: [
       {
@@ -145,7 +153,7 @@ async function generateBatchForClient(supabase: any, endClientId: string, weekSt
     messages: [
       {
         role: 'user',
-        content: buildProducerPrompt({
+        content: buildPlanPrompt({
           profile: profileInput,
           learnings,
           piecesCount,
@@ -155,23 +163,71 @@ async function generateBatchForClient(supabase: any, endClientId: string, weekSt
     ],
   });
 
-  const usage = computeUsage(response);
+  const planUsage = computeUsage(planResponse);
+  const parsedPlan = extractJson<{ trends_summary: string; plan: PlanItem[] }>(
+    extractText(planResponse)
+  );
+  const plan = (parsedPlan.plan ?? []).slice(0, piecesCount); // nunca más del límite
+  if (plan.length === 0) throw new Error('El Productor no devolvió un plan de piezas');
+
+  // Etapa 2: una llamada por pieza, EN PARALELO (evita el límite de wall
+  // clock de la Edge Function y escala hasta 10 piezas).
+  const pieceResults = await Promise.allSettled(
+    plan.map((_item, index) =>
+      anthropic.messages.create({
+        model: CLAUDE_MODEL,
+        max_tokens: MAX_TOKENS_PER_PIECE,
+        system: PRODUCER_SYSTEM,
+        messages: [
+          {
+            role: 'user',
+            content: buildPiecePrompt({
+              profile: profileInput,
+              learnings,
+              weekStart,
+              trendsSummary: parsedPlan.trends_summary ?? '',
+              plan,
+              index,
+            }),
+          },
+        ],
+      })
+    )
+  );
+
+  const usage = { ...planUsage };
+  const rows: Record<string, unknown>[] = [];
+  for (let i = 0; i < pieceResults.length; i++) {
+    const result = pieceResults[i];
+    if (result.status === 'rejected') {
+      console.error(`[producer] pieza ${i + 1} falló:`, result.reason);
+      continue;
+    }
+    const pieceUsage = computeUsage(result.value);
+    usage.inputTokens += pieceUsage.inputTokens;
+    usage.outputTokens += pieceUsage.outputTokens;
+    usage.webSearches += pieceUsage.webSearches;
+    usage.estimatedCostUsd += pieceUsage.estimatedCostUsd;
+    try {
+      const piece = extractJson<GeneratedPiece>(extractText(result.value));
+      rows.push({
+        batch_id: batchId,
+        platform: plan[i].platform,
+        format: plan[i].format,
+        copy_text: piece.copy_text ?? '',
+        visual_brief: piece.visual_brief ?? '',
+        strategic_argument: piece.strategic_argument ?? '',
+        status: 'draft',
+        position: rows.length + 1,
+      });
+    } catch (err) {
+      console.error(`[producer] pieza ${i + 1} JSON inválido:`, err);
+    }
+  }
+
   await logGeneration(supabase, agency.id, batchId, usage);
+  if (rows.length === 0) throw new Error('El Productor no devolvió piezas');
 
-  const parsed = extractJson<{ pieces: GeneratedPiece[] }>(extractText(response));
-  const pieces = (parsed.pieces ?? []).slice(0, piecesCount); // nunca más del límite
-  if (pieces.length === 0) throw new Error('El Productor no devolvió piezas');
-
-  const rows = pieces.map((p, i) => ({
-    batch_id: batchId,
-    platform: p.platform,
-    format: p.format,
-    copy_text: p.copy_text ?? '',
-    visual_brief: p.visual_brief ?? '',
-    strategic_argument: p.strategic_argument ?? '',
-    status: 'draft',
-    position: i + 1,
-  }));
   const { error: piecesError } = await supabase.from('pieces').insert(rows);
   if (piecesError) throw new Error(`No se pudieron guardar las piezas: ${piecesError.message}`);
 
@@ -184,7 +240,7 @@ async function generateBatchForClient(supabase: any, endClientId: string, weekSt
     end_client_id: endClientId,
     batch_id: batchId,
     week_start: weekStart,
-    pieces_generated: pieces.length,
+    pieces_generated: rows.length,
     cost_usd: usage.estimatedCostUsd,
   };
 }
@@ -206,7 +262,7 @@ async function regeneratePiece(supabase: any, pieceId: string, instruction: stri
   const anthropic = getAnthropicClient();
   const response = await anthropic.messages.create({
     model: CLAUDE_MODEL,
-    max_tokens: BASE_MAX_TOKENS + MAX_TOKENS_PER_PIECE,
+    max_tokens: MAX_TOKENS_PER_PIECE,
     system: PRODUCER_SYSTEM,
     messages: [
       {
