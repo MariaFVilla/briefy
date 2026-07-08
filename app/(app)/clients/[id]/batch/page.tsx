@@ -6,6 +6,7 @@ import { BatchStatusBadge } from '@/components/status-badge';
 import { PieceCard } from '@/components/piece-card';
 import { SendToClientButton } from '@/components/send-to-client-button';
 import { AutoRefresh } from '@/components/auto-refresh';
+import { ApprovalLinkCard } from '@/components/approval-link-card';
 import type {
   ContentBatch,
   EndClient,
@@ -63,6 +64,20 @@ export default async function BatchPage({
   const approvedCount = pieces.filter((p) => p.status === 'approved_internal').length;
   const whatsappConnected = endClient.agencies?.whatsapp_status === 'connected';
 
+  // El link de aprobación se muestra de forma persistente en cuanto el batch
+  // fue enviado (o hay piezas en manos del cliente) — nunca se pierde.
+  const clientFacing = pieces.some((p) =>
+    ['sent_to_client', 'client_approved', 'changes_requested', 'regenerating', 'final'].includes(
+      p.status
+    )
+  );
+  const batchSent = !!batch && (['sent', 'completed'].includes(batch.status) || clientFacing);
+  const approveUrl = batchSent
+    ? `${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/approve/${
+        (batch as ContentBatch).approval_token
+      }`
+    : null;
+
   return (
     <div className="mx-auto max-w-4xl">
       <div className="mb-8 flex items-start justify-between gap-4">
@@ -94,6 +109,8 @@ export default async function BatchPage({
 
       {/* Mientras el producer corre en Supabase, la página se refresca sola */}
       {(!batch || batch.status === 'generating') && <AutoRefresh />}
+
+      {approveUrl && <ApprovalLinkCard approveUrl={approveUrl} />}
 
       {!batch ? (
         <div className="card px-8 py-16 text-center text-sm text-slate-500">
