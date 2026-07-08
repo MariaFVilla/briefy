@@ -74,8 +74,19 @@ npm install
 npm run dev
 ```
 
-Deploy en Vercel: importa el repo y define las mismas variables de `.env.example`
-(más `NEXT_PUBLIC_APP_URL` con tu dominio).
+### Deploy en Vercel
+
+1. En [vercel.com/new](https://vercel.com/new) importa el repo `Threeangletriangle/briefy`
+   (framework: Next.js, sin cambiar nada más).
+2. En **Environment Variables** pega estas 4:
+   | Variable | Valor |
+   |---|---|
+   | `NEXT_PUBLIC_SUPABASE_URL` | `https://<PROJECT_REF>.supabase.co` |
+   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | anon key (Dashboard > Settings > API Keys > Legacy) |
+   | `SUPABASE_SERVICE_ROLE_KEY` | service_role key (misma página) |
+   | `NEXT_PUBLIC_APP_URL` | tu dominio de Vercel (ej: `https://briefy.vercel.app`) |
+3. Deploy. Si aún no conoces el dominio, deploya primero, copia el dominio asignado,
+   actualiza `NEXT_PUBLIC_APP_URL` y redeploya (afecta los links de aprobación).
 
 ### 3. WhatsApp (por agencia)
 

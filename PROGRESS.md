@@ -1,12 +1,26 @@
 # PROGRESS.md — Estado de Briefy
 
-Última actualización: 2026-07-07
+Última actualización: 2026-07-07 (noche)
 
 ## Resumen
 
-Las 5 fases del MVP están **implementadas y el proyecto compila en verde**
-(`npm run build`). Lo que falta para operar es **conectar servicios externos**
-(proyecto de Supabase real, API keys) — no falta código del MVP.
+Las 5 fases del MVP están implementadas **y el backend real está operando**:
+
+- Proyecto Supabase `vtcgpjrkskiapscqnagc` con migraciones, RLS, Realtime,
+  las 4 Edge Functions deployadas, secrets (`ANTHROPIC_API_KEY`,
+  `D360_WEBHOOK_SECRET`) y cron semanal instalado (`briefy-weekly-producer`).
+- **Smoke test real del Productor**: batch del restaurante demo generado en 84s,
+  4 piezas en `draft` con web search aplicado (festivo 20 de julio detectado),
+  learnings respetados y costo ($0.26 USD) registrado en `generation_logs`.
+  El producer corre en dos etapas (plan con web search + piezas en paralelo)
+  para caber en el límite de 150s de las Edge Functions.
+- Demo verificado en navegador: login `demo@briefy.app` / `demo12345` →
+  dashboard con la agencia Impulso Creativo y sus 3 clientes.
+- Repo en GitHub: `Threeangletriangle/briefy` (privado), listo para importar
+  en Vercel (ver README → Deploy en Vercel).
+
+Falta solo: deploy en Vercel (lo hace el usuario importando el repo) y, para el
+canal WhatsApp, la cuenta 360dialog + `OPENAI_API_KEY` (Whisper).
 
 ---
 
