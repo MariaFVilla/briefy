@@ -75,29 +75,42 @@ ${learningsBlock(learnings)}
 <instrucciones>
 1. Usa la herramienta de búsqueda web (MÁXIMO 2 búsquedas, sé rápido) para detectar tendencias de esta semana (semana del ${weekStart}) relevantes para el nicho "${profile.businessType}" en las plataformas activas: formatos que funcionan, audios/challenges, fechas conmemorativas de la semana en LATAM.
 2. Diseña el plan semanal: la lista "plan" DEBE contener EXACTAMENTE ${piecesCount} elementos — ni uno más, ni uno menos. Cuenta los elementos antes de responder. Distribuye las piezas entre las plataformas activas del cliente, cada una con un ángulo distinto (que no se repitan temas). Si el negocio da para pocos temas, varía el formato y el enfoque (educativo, promocional, detrás de cámaras, prueba social, urgencia).
-3. Responde ÚNICAMENTE con este JSON (sin markdown):
+3. Asigna a cada pieza un "objective" (pilar estratégico) y BALANCEA la mezcla de la semana — nunca todas las piezas del mismo pilar:
+   - "alcance": que el negocio llegue a gente nueva (tendencias, fechas, contenido compartible).
+   - "conexion": comunidad y confianza (historia, detrás de cámaras, prueba social, interacción).
+   - "venta": acción directa (producto, precio, promo, reserva/CTA de compra).
+   Mezcla de referencia: ~40% conexión, ~30% alcance, ~30% venta (con 3 piezas: una de cada pilar).
+4. Responde ÚNICAMENTE con este JSON (sin markdown):
 {
-  "trends_summary": "<resumen en 3-5 líneas de las tendencias encontradas y fechas relevantes>",
+  "trends_summary": "<3-5 líneas: qué está pasando esta semana en el nicho y las plataformas (tendencias, fechas en LATAM) y cómo lo aprovecha este plan. Escríbelo como argumento de estratega para el dueño del negocio.>",
   "plan": [
     {
       "platform": "instagram",
       "format": "post",
+      "objective": "venta",
       "theme": "<tema de la pieza>",
       "angle": "<ángulo/hook específico, 1 línea>"
     }
   ]
 }
-Reglas del plan: "platform" solo entre las activas; "format" válido para esa plataforma (instagram: post|carrusel|reel-guion|story; facebook: post; tiktok: guion).
+Reglas del plan: "platform" solo entre las activas; "format" válido para esa plataforma (instagram: post|carrusel|reel-guion|story; facebook: post; tiktok: guion); "objective" solo alcance|conexion|venta.
 </instrucciones>`;
 }
 
 // Etapa 2: generación de UNA pieza según el plan (se ejecuta en paralelo).
+// El brief visual sale estructurado (metodología de brief creativo estándar).
 export function buildPiecePrompt(params: {
   profile: ProducerProfileInput;
   learnings: string[];
   weekStart: string;
   trendsSummary: string;
-  plan: Array<{ platform: string; format: string; theme: string; angle: string }>;
+  plan: Array<{
+    platform: string;
+    format: string;
+    objective?: string;
+    theme: string;
+    angle: string;
+  }>;
   index: number;
 }): string {
   const { profile, learnings, weekStart, trendsSummary, plan, index } = params;
@@ -118,25 +131,24 @@ ${trendsSummary}
 ${plan
   .map(
     (p, i) =>
-      `Pieza ${i + 1}: ${p.platform}/${p.format} — tema: ${p.theme} — ángulo: ${p.angle}${i === index ? '  ← ESTA ES TU PIEZA' : ''}`
+      `Pieza ${i + 1}: ${p.platform}/${p.format} — objetivo: ${p.objective ?? 'conexion'} — tema: ${p.theme} — ángulo: ${p.angle}${i === index ? '  ← ESTA ES TU PIEZA' : ''}`
   )
   .join('\n')}
 </plan_semanal>
 
 <instrucciones>
-Genera SOLO la pieza ${index + 1} del plan (${item.platform}/${item.format}) para la semana del ${weekStart}. No repitas los ángulos de las otras piezas del plan.
+Genera SOLO la pieza ${index + 1} del plan (${item.platform}/${item.format}, objetivo: ${item.objective ?? 'conexion'}) para la semana del ${weekStart}. No repitas los ángulos de las otras piezas del plan. El copy y el CTA deben responder al objetivo de la pieza (alcance → compartible; conexion → conversación/comunidad; venta → acción de compra/reserva).
 
 Entrega:
 - "copy_text": el texto FINAL listo para publicar (caption completo con hook que resuelve en 3 segundos, desarrollo, CTA y hashtags si aplican; para guiones: guion completo con indicaciones de escena).
-- "visual_brief": instrucciones precisas para el diseñador humano: formato/dimensiones, qué aparece, emoción, colores sugeridos, tipografía sugerida.
+- "visual_brief": el brief para el diseñador humano, estructurado en estos campos:
+  - "formato": formato y dimensiones (ej: "Post 1080×1350", "Carrusel 5 slides 1080×1350", "Story 1080×1920").
+  - "mensaje_clave": la idea única que debe comunicar la imagen/video, en 1 línea.
+  - "en_escena": qué aparece exactamente (elementos, personas, producto, texto sobre imagen).
+  - "estilo": emoción a transmitir + colores y tipografía sugeridos (respeta las referencias visuales de marca).
+  - "mandatorios": lo que NO puede faltar ni fallar (precio visible, logo, ortografía de la marca, etc.).
+  - "cta_visual": el llamado a la acción como debe verse en la pieza.
 - "strategic_argument": 2-3 líneas de por qué esta pieza funciona para ESTE negocio ESTA semana, con base en las tendencias o el perfil.
-
-Responde ÚNICAMENTE con este JSON (sin markdown):
-{
-  "copy_text": "...",
-  "visual_brief": "...",
-  "strategic_argument": "..."
-}
 </instrucciones>`;
 }
 

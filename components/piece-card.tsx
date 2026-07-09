@@ -11,10 +11,18 @@ import {
 import { PieceStatusBadge } from '@/components/status-badge';
 import {
   FORMAT_LABELS,
+  OBJECTIVE_LABELS,
   PLATFORM_LABELS,
+  type PieceObjective,
   type Piece,
   type PieceVersion,
 } from '@/lib/types/database';
+
+const OBJECTIVE_COLORS: Record<PieceObjective, string> = {
+  alcance: 'bg-sky-100 text-sky-700',
+  conexion: 'bg-violet-100 text-violet-700',
+  venta: 'bg-emerald-100 text-emerald-700',
+};
 
 export function PieceCard({
   piece,
@@ -54,6 +62,11 @@ export function PieceCard({
             Pieza {piece.position} — {PLATFORM_LABELS[piece.platform] ?? piece.platform} ·{' '}
             {FORMAT_LABELS[piece.format] ?? piece.format}
           </span>
+          {piece.objective && (
+            <span className={`badge ${OBJECTIVE_COLORS[piece.objective]}`}>
+              🎯 {OBJECTIVE_LABELS[piece.objective]}
+            </span>
+          )}
           <PieceStatusBadge status={piece.status} />
         </div>
         {versions.length > 0 && (

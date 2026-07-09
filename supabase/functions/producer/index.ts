@@ -31,21 +31,34 @@ const MAX_TOKENS_PER_PIECE = 2500;
 const PLAN_MAX_TOKENS = 1500;
 const MAX_WEB_SEARCHES = 2;
 
+const OBJECTIVES = ['alcance', 'conexion', 'venta'];
+
 interface PlanItem {
   platform: string;
   format: string;
+  objective?: string;
   theme: string;
   angle: string;
 }
 
+interface VisualBriefFields {
+  formato: string;
+  mensaje_clave: string;
+  en_escena: string;
+  estilo: string;
+  mandatorios: string;
+  cta_visual: string;
+}
+
 interface GeneratedPiece {
   copy_text: string;
-  visual_brief: string;
+  visual_brief: VisualBriefFields;
   strategic_argument: string;
 }
 
 // Structured outputs: la API garantiza JSON válido para cada pieza
 // (las respuestas freeform a veces traían escapes inválidos y se perdían piezas).
+// El brief visual sigue la estructura de brief creativo estándar.
 const PIECE_OUTPUT_CONFIG = {
   format: {
     type: 'json_schema',
@@ -53,7 +66,19 @@ const PIECE_OUTPUT_CONFIG = {
       type: 'object',
       properties: {
         copy_text: { type: 'string' },
-        visual_brief: { type: 'string' },
+        visual_brief: {
+          type: 'object',
+          properties: {
+            formato: { type: 'string' },
+            mensaje_clave: { type: 'string' },
+            en_escena: { type: 'string' },
+            estilo: { type: 'string' },
+            mandatorios: { type: 'string' },
+            cta_visual: { type: 'string' },
+          },
+          required: ['formato', 'mensaje_clave', 'en_escena', 'estilo', 'mandatorios', 'cta_visual'],
+          additionalProperties: false,
+        },
         strategic_argument: { type: 'string' },
       },
       required: ['copy_text', 'visual_brief', 'strategic_argument'],
@@ -61,6 +86,19 @@ const PIECE_OUTPUT_CONFIG = {
     },
   },
 };
+
+// El brief se guarda como texto formateado: legible, editable inline y
+// consistente entre piezas (los diseñadores agradecen la estructura fija).
+function composeVisualBrief(brief: VisualBriefFields): string {
+  return [
+    `📐 Formato: ${brief.formato}`,
+    `💬 Mensaje clave: ${brief.mensaje_clave}`,
+    `🖼 En escena: ${brief.en_escena}`,
+    `🎨 Estilo: ${brief.estilo}`,
+    `✅ Mandatorios: ${brief.mandatorios}`,
+    `📣 CTA visual: ${brief.cta_visual}`,
+  ].join('\n');
+}
 
 function mondayOfCurrentWeek(timezone: string): string {
   // Fecha actual en la zona horaria de la agencia, retrocedida al lunes.
@@ -191,6 +229,15 @@ async function generateBatchForClient(supabase: any, endClientId: string, weekSt
   const plan = (parsedPlan.plan ?? []).slice(0, piecesCount); // nunca más del límite
   if (plan.length === 0) throw new Error('El Productor no devolvió un plan de piezas');
 
+  // La historia de tendencias se guarda en el batch: es el argumento
+  // estratégico del plan semanal ante la agencia y su cliente.
+  if (parsedPlan.trends_summary) {
+    await supabase
+      .from('content_batches')
+      .update({ trends_summary: parsedPlan.trends_summary })
+      .eq('id', batchId);
+  }
+
   // Etapa 2: una llamada por pieza, EN PARALELO (evita el límite de wall
   // clock de la Edge Function y escala hasta 10 piezas). Con un reintento
   // por pieza si la primera respuesta viene mal.
@@ -249,8 +296,9 @@ async function generateBatchForClient(supabase: any, endClientId: string, weekSt
         batch_id: batchId,
         platform: plan[i].platform,
         format: plan[i].format,
+        objective: OBJECTIVES.includes(plan[i].objective ?? '') ? plan[i].objective : null,
         copy_text: piece.copy_text ?? '',
-        visual_brief: piece.visual_brief ?? '',
+        visual_brief: piece.visual_brief ? composeVisualBrief(piece.visual_brief) : '',
         strategic_argument: piece.strategic_argument ?? '',
         status: 'draft',
         position: rows.length + 1,

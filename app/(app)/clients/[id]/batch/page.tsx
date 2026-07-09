@@ -112,6 +112,18 @@ export default async function BatchPage({
 
       {approveUrl && <ApprovalLinkCard approveUrl={approveUrl} />}
 
+      {/* La historia de tendencias: el argumento estratégico del plan semanal */}
+      {batch?.trends_summary && (
+        <div className="card mb-6 border-l-4 border-l-brand-500 p-5">
+          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
+            📈 Por qué este plan esta semana
+          </p>
+          <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
+            {batch.trends_summary}
+          </p>
+        </div>
+      )}
+
       {!batch ? (
         <div className="card px-8 py-16 text-center text-sm text-slate-500">
           No hay batch para esta semana todavía. Si acabas de generarlo, las piezas

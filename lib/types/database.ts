@@ -89,6 +89,8 @@ export interface ClientLearning {
   created_at: string;
 }
 
+export type PieceObjective = 'alcance' | 'conexion' | 'venta';
+
 export interface ContentBatch {
   id: string;
   end_client_id: string;
@@ -96,6 +98,7 @@ export interface ContentBatch {
   status: BatchStatus;
   approval_token: string;
   approval_token_expires_at: string | null;
+  trends_summary: string | null;
   created_at: string;
 }
 
@@ -104,6 +107,7 @@ export interface Piece {
   batch_id: string;
   platform: Platform;
   format: PieceFormat;
+  objective: PieceObjective | null;
   copy_text: string;
   visual_brief: string;
   strategic_argument: string;
@@ -205,6 +209,12 @@ export const PLATFORM_LABELS: Record<Platform, string> = {
   instagram: 'Instagram',
   facebook: 'Facebook',
   tiktok: 'TikTok',
+};
+
+export const OBJECTIVE_LABELS: Record<PieceObjective, string> = {
+  alcance: 'Alcance',
+  conexion: 'Conexión',
+  venta: 'Venta',
 };
 
 export const FORMAT_LABELS: Record<PieceFormat, string> = {
