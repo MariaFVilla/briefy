@@ -24,7 +24,7 @@ export function SidebarNav() {
             href={item.href}
             className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition ${
               active
-                ? 'bg-indigo-50 text-indigo-700'
+                ? 'bg-brand-50 text-brand-700'
                 : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
             }`}
           >

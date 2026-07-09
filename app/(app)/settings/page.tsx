@@ -60,7 +60,7 @@ export default async function SettingsPage() {
           Plan actual: <strong>{PLAN_LABELS[agency.plan] ?? agency.plan}</strong>
         </p>
         <p className="mt-1 text-xs text-slate-400">
-          Para cambiar de plan, contacta a tu asesor de Briefy.
+          Para cambiar de plan, contacta a tu asesor de Bitélica Briefs.
         </p>
       </section>
     </div>

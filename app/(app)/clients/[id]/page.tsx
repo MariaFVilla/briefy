@@ -51,7 +51,7 @@ export default async function ClientDetailPage({
       <div className="mb-8 flex items-start justify-between gap-4">
         <div>
           <p className="text-xs text-slate-400">
-            <Link href="/clients" className="hover:text-indigo-600">
+            <Link href="/clients" className="hover:text-brand-600">
               Clientes
             </Link>{' '}
             /
@@ -74,6 +74,19 @@ export default async function ClientDetailPage({
         </div>
       </div>
 
+      {/* Perfil incompleto (onboarding exprés): invitar a afinar */}
+      {!profile?.target_audience && !profile?.tone && (
+        <div className="card mb-6 flex items-center justify-between gap-4 border-brand-200 bg-brand-50/40 px-5 py-4">
+          <p className="text-sm text-slate-700">
+            <strong>Afina el perfil</strong> (audiencia, tono, palabras prohibidas) y el
+            contenido va a sonar aún más a este negocio.
+          </p>
+          <Link href={`/clients/${endClient.id}/edit`} className="btn-primary shrink-0">
+            Completar perfil
+          </Link>
+        </div>
+      )}
+
       {/* Batch de la semana */}
       <section className="card mb-6 p-6">
         <div className="mb-3 flex items-center justify-between">
@@ -84,7 +97,7 @@ export default async function ClientDetailPage({
         {currentBatch ? (
           <Link
             href={`/clients/${endClient.id}/batch`}
-            className="flex items-center justify-between rounded-lg border border-slate-200 px-4 py-3 transition hover:border-indigo-300"
+            className="flex items-center justify-between rounded-lg border border-slate-200 px-4 py-3 transition hover:border-brand-300"
           >
             <div>
               <p className="text-sm font-medium text-slate-900">
@@ -154,7 +167,7 @@ export default async function ClientDetailPage({
           Learnings acumulados
         </h2>
         <p className="mb-4 text-xs text-slate-400">
-          Lo que Briefy aprendió de las respuestas de este cliente. Se aplican en cada
+          Lo que Bitélica Briefs aprendió de las respuestas de este cliente. Se aplican en cada
           generación. Puedes editarlos o desactivarlos.
         </p>
         <LearningsList learnings={(learnings ?? []) as ClientLearning[]} />

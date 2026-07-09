@@ -24,7 +24,10 @@ import {
   type ProducerProfileInput,
 } from '../_shared/prompts/producer.ts';
 
-const MAX_TOKENS_PER_PIECE = 1300; // control de costos: presupuesto acotado por pieza
+// Presupuesto acotado por pieza (control de costos). Un carrusel completo
+// (copy de 7 slides + brief + argumento en JSON) llega a ~2000 tokens; con
+// menos, la respuesta se corta y la pieza se pierde.
+const MAX_TOKENS_PER_PIECE = 2500;
 const PLAN_MAX_TOKENS = 1500;
 const MAX_WEB_SEARCHES = 2;
 
@@ -40,6 +43,24 @@ interface GeneratedPiece {
   visual_brief: string;
   strategic_argument: string;
 }
+
+// Structured outputs: la API garantiza JSON válido para cada pieza
+// (las respuestas freeform a veces traían escapes inválidos y se perdían piezas).
+const PIECE_OUTPUT_CONFIG = {
+  format: {
+    type: 'json_schema',
+    schema: {
+      type: 'object',
+      properties: {
+        copy_text: { type: 'string' },
+        visual_brief: { type: 'string' },
+        strategic_argument: { type: 'string' },
+      },
+      required: ['copy_text', 'visual_brief', 'strategic_argument'],
+      additionalProperties: false,
+    },
+  },
+};
 
 function mondayOfCurrentWeek(timezone: string): string {
   // Fecha actual en la zona horaria de la agencia, retrocedida al lunes.
@@ -171,13 +192,17 @@ async function generateBatchForClient(supabase: any, endClientId: string, weekSt
   if (plan.length === 0) throw new Error('El Productor no devolvió un plan de piezas');
 
   // Etapa 2: una llamada por pieza, EN PARALELO (evita el límite de wall
-  // clock de la Edge Function y escala hasta 10 piezas).
-  const pieceResults = await Promise.allSettled(
-    plan.map((_item, index) =>
-      anthropic.messages.create({
+  // clock de la Edge Function y escala hasta 10 piezas). Con un reintento
+  // por pieza si la primera respuesta viene mal.
+  // deno-lint-ignore no-explicit-any
+  async function generatePieceCall(index: number, attempt = 1): Promise<any> {
+    try {
+      // deno-lint-ignore no-explicit-any
+      return await anthropic.messages.create({
         model: CLAUDE_MODEL,
         max_tokens: MAX_TOKENS_PER_PIECE,
         system: PRODUCER_SYSTEM,
+        output_config: PIECE_OUTPUT_CONFIG,
         messages: [
           {
             role: 'user',
@@ -191,16 +216,26 @@ async function generateBatchForClient(supabase: any, endClientId: string, weekSt
             }),
           },
         ],
-      })
-    )
+      // deno-lint-ignore no-explicit-any
+      } as any);
+    } catch (err) {
+      if (attempt < 2) return generatePieceCall(index, attempt + 1);
+      throw err;
+    }
+  }
+
+  const pieceResults = await Promise.allSettled(
+    plan.map((_item, index) => generatePieceCall(index))
   );
 
   const usage = { ...planUsage };
   const rows: Record<string, unknown>[] = [];
+  const failures: string[] = [];
   for (let i = 0; i < pieceResults.length; i++) {
     const result = pieceResults[i];
     if (result.status === 'rejected') {
       console.error(`[producer] pieza ${i + 1} falló:`, result.reason);
+      failures.push(`pieza ${i + 1}: ${String(result.reason).slice(0, 300)}`);
       continue;
     }
     const pieceUsage = computeUsage(result.value);
@@ -222,6 +257,7 @@ async function generateBatchForClient(supabase: any, endClientId: string, weekSt
       });
     } catch (err) {
       console.error(`[producer] pieza ${i + 1} JSON inválido:`, err);
+      failures.push(`pieza ${i + 1} JSON: ${String(err).slice(0, 300)}`);
     }
   }
 
@@ -240,7 +276,9 @@ async function generateBatchForClient(supabase: any, endClientId: string, weekSt
     end_client_id: endClientId,
     batch_id: batchId,
     week_start: weekStart,
+    pieces_planned: plan.length,
     pieces_generated: rows.length,
+    failures: failures.length ? failures : undefined,
     cost_usd: usage.estimatedCostUsd,
   };
 }

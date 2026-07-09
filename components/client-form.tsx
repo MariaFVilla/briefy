@@ -252,7 +252,7 @@ export function ClientForm({
                     type="checkbox"
                     checked={!!config}
                     onChange={() => togglePlatform(platform)}
-                    className="h-4 w-4 rounded border-slate-300 text-indigo-600"
+                    className="h-4 w-4 rounded border-slate-300 text-brand-600"
                   />
                   <span className="capitalize">{platform}</span>
                 </label>
@@ -263,7 +263,7 @@ export function ClientForm({
                         key={format}
                         className={`cursor-pointer rounded-full border px-3 py-1 text-xs font-medium transition ${
                           config.formats.includes(format)
-                            ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
+                            ? 'border-brand-600 bg-brand-50 text-brand-700'
                             : 'border-slate-200 text-slate-500 hover:border-slate-300'
                         }`}
                       >

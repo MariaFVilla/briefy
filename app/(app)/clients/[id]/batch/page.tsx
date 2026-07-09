@@ -83,11 +83,11 @@ export default async function BatchPage({
       <div className="mb-8 flex items-start justify-between gap-4">
         <div>
           <p className="text-xs text-slate-400">
-            <Link href="/clients" className="hover:text-indigo-600">
+            <Link href="/clients" className="hover:text-brand-600">
               Clientes
             </Link>{' '}
             /{' '}
-            <Link href={`/clients/${params.id}`} className="hover:text-indigo-600">
+            <Link href={`/clients/${params.id}`} className="hover:text-brand-600">
               {endClient.name}
             </Link>{' '}
             /
@@ -116,7 +116,7 @@ export default async function BatchPage({
         <div className="card px-8 py-16 text-center text-sm text-slate-500">
           No hay batch para esta semana todavía. Si acabas de generarlo, las piezas
           aparecerán aquí solas en 1-2 minutos.{' '}
-          <Link href={`/clients/${params.id}`} className="text-indigo-600">
+          <Link href={`/clients/${params.id}`} className="text-brand-600">
             Volver al perfil del cliente
           </Link>
         </div>

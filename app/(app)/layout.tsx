@@ -18,7 +18,7 @@ export default async function AppLayout({
         <div className="mb-8 flex items-center gap-3 px-2">
           <div
             className="flex h-9 w-9 items-center justify-center rounded-lg text-sm font-bold text-white"
-            style={{ backgroundColor: agency.brand_color || '#4f46e5' }}
+            style={{ backgroundColor: agency.brand_color || '#F01263' }}
           >
             {agency.name.charAt(0).toUpperCase()}
           </div>
@@ -32,6 +32,9 @@ export default async function AppLayout({
         <SidebarNav />
         <div className="mt-auto border-t border-slate-100 pt-4">
           <SignOutButton />
+          <p className="mt-3 px-3 text-[10px] font-bold uppercase tracking-widest text-slate-300">
+            Bitélica <span className="text-brand-400">Briefs</span>
+          </p>
         </div>
       </aside>
       <main className="ml-60 flex-1 px-8 py-8">{children}</main>

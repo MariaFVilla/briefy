@@ -71,7 +71,7 @@ export function WhatsappSettings({
             href="https://hub.360dialog.com"
             target="_blank"
             rel="noreferrer"
-            className="text-indigo-600 underline"
+            className="text-brand-600 underline"
           >
             hub.360dialog.com
           </a>{' '}

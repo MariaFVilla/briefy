@@ -24,7 +24,7 @@ export function ApprovalLinkCard({ approveUrl }: { approveUrl: string }) {
   }
 
   return (
-    <div className="card mb-6 border-indigo-200 bg-indigo-50/40 p-5">
+    <div className="card mb-6 border-brand-200 bg-brand-50/40 p-5">
       <p className="mb-1 text-sm font-semibold text-slate-900">
         🔗 Link de aprobación del cliente
       </p>

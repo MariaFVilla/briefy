@@ -28,7 +28,7 @@ export function OnboardingChecklist({ state }: { state: OnboardingState }) {
     <div className="card mb-6 p-5">
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-slate-900">
-          Primeros pasos con Briefy
+          Primeros pasos con Bitélica Briefs
         </h2>
         <span className="text-xs text-slate-400">
           {doneCount}/{STEPS.length} completados

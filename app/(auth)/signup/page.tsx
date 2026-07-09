@@ -110,7 +110,7 @@ export default function SignupPage() {
       </form>
       <p className="mt-6 text-center text-sm text-slate-500">
         ¿Ya tienes cuenta?{' '}
-        <Link href="/login" className="font-medium text-indigo-600 hover:text-indigo-700">
+        <Link href="/login" className="font-medium text-brand-600 hover:text-brand-700">
           Inicia sesión
         </Link>
       </p>

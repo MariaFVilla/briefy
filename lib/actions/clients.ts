@@ -2,9 +2,11 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { waitUntil } from '@vercel/functions';
 import { createClient } from '@/lib/supabase/server';
 import { getCurrentAgency } from '@/lib/data/agency';
-import type { PlatformConfig } from '@/lib/types/database';
+import { invokeEdgeFunction } from '@/lib/actions/edge';
+import type { Platform, PlatformConfig } from '@/lib/types/database';
 
 export interface ClientFormData {
   name: string;
@@ -28,6 +30,60 @@ function splitWords(value: string): string[] {
     .split(',')
     .map((w) => w.trim())
     .filter(Boolean);
+}
+
+const DEFAULT_FORMATS: Record<Platform, string[]> = {
+  instagram: ['post', 'carrusel', 'story'],
+  facebook: ['post'],
+  tiktok: ['guion'],
+};
+
+// Onboarding exprés: 3 campos → cliente creado → generación inmediata de
+// un mini-batch de muestra (3 piezas). El perfil completo se llena después.
+export async function createEndClientQuick(data: {
+  name: string;
+  description: string;
+  platforms: Platform[];
+}) {
+  const current = await getCurrentAgency();
+  if (!current) throw new Error('Sin sesión');
+  if (!data.name.trim() || !data.description.trim()) {
+    throw new Error('Completa el nombre y la descripción');
+  }
+  const supabase = createClient();
+
+  const { data: client, error } = await supabase
+    .from('end_clients')
+    .insert({
+      agency_id: current.agency.id,
+      name: data.name.trim(),
+      pieces_per_week: 3, // muestra rápida; se ajusta luego en el perfil
+    })
+    .select('id')
+    .single();
+  if (error) throw new Error(`No se pudo crear el cliente: ${error.message}`);
+
+  const platforms: PlatformConfig[] = (
+    data.platforms.length ? data.platforms : (['instagram'] as Platform[])
+  ).map((p) => ({ platform: p, formats: DEFAULT_FORMATS[p] as PlatformConfig['formats'] }));
+
+  const { error: profileError } = await supabase.from('client_profiles').insert({
+    end_client_id: client.id,
+    business_description: data.description.trim(),
+    platforms,
+  });
+  if (profileError) throw new Error(`No se pudo crear el perfil: ${profileError.message}`);
+
+  // Generación inmediata de la muestra — el "wow" en el primer uso.
+  waitUntil(
+    invokeEdgeFunction('producer', { end_client_id: client.id }).catch((err) =>
+      console.error('[producer quick]', err)
+    )
+  );
+
+  revalidatePath('/dashboard');
+  revalidatePath('/clients');
+  redirect(`/clients/${client.id}/batch`);
 }
 
 export async function createEndClient(data: ClientFormData) {

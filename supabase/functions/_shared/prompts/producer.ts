@@ -74,7 +74,7 @@ ${learningsBlock(learnings)}
 
 <instrucciones>
 1. Usa la herramienta de búsqueda web (MÁXIMO 2 búsquedas, sé rápido) para detectar tendencias de esta semana (semana del ${weekStart}) relevantes para el nicho "${profile.businessType}" en las plataformas activas: formatos que funcionan, audios/challenges, fechas conmemorativas de la semana en LATAM.
-2. Diseña el plan semanal: EXACTAMENTE ${piecesCount} piezas distribuidas entre las plataformas activas del cliente, cada una con un ángulo distinto (que no se repitan temas).
+2. Diseña el plan semanal: la lista "plan" DEBE contener EXACTAMENTE ${piecesCount} elementos — ni uno más, ni uno menos. Cuenta los elementos antes de responder. Distribuye las piezas entre las plataformas activas del cliente, cada una con un ángulo distinto (que no se repitan temas). Si el negocio da para pocos temas, varía el formato y el enfoque (educativo, promocional, detrás de cámaras, prueba social, urgencia).
 3. Responde ÚNICAMENTE con este JSON (sin markdown):
 {
   "trends_summary": "<resumen en 3-5 líneas de las tendencias encontradas y fechas relevantes>",

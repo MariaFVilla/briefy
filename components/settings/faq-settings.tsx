@@ -90,7 +90,7 @@ function FaqRow({ faq }: { faq: FaqTemplate }) {
         <button
           disabled={pending}
           onClick={() => startTransition(() => toggleFaq(faq.id, !faq.active))}
-          className="text-slate-400 hover:text-indigo-600"
+          className="text-slate-400 hover:text-brand-600"
         >
           {faq.active ? 'Desactivar' : 'Activar'}
         </button>

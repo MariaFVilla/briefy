@@ -44,7 +44,7 @@ export default async function ApprovePage({ params }: { params: { token: string 
     );
   }
 
-  const brandColor = batch.agency.brand_color || '#4f46e5';
+  const brandColor = batch.agency.brand_color || '#F01263';
   const pending = batch.pieces.filter((p) => p.status === 'sent_to_client');
   const done = batch.pieces.filter((p) => p.status !== 'sent_to_client');
 

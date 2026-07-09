@@ -23,7 +23,7 @@ export default async function ClientsPage() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Clientes</h1>
           <p className="mt-1 text-sm text-slate-500">
-            Los negocios para los que Briefy genera contenido cada semana
+            Los negocios para los que Bitélica Briefs genera contenido cada semana
           </p>
         </div>
         <Link href="/clients/new" className="btn-primary">

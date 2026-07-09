@@ -65,7 +65,7 @@ export function DashboardGrid({
           Aún no tienes clientes
         </p>
         <p className="mb-6 max-w-md text-sm text-slate-500">
-          Carga tu primer cliente final con su perfil completo y Briefy generará su
+          Carga tu primer cliente final con su perfil completo y Bitélica Briefs generará su
           paquete de contenido semanal.
         </p>
         <Link href="/clients/new" className="btn-primary">
@@ -83,11 +83,11 @@ export function DashboardGrid({
           <Link
             key={client.id}
             href={`/clients/${client.id}`}
-            className="card group p-5 transition hover:border-indigo-300 hover:shadow-md"
+            className="card group p-5 transition hover:border-brand-300 hover:shadow-md"
           >
             <div className="mb-3 flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <p className="truncate font-semibold text-slate-900 group-hover:text-indigo-700">
+                <p className="truncate font-semibold text-slate-900 group-hover:text-brand-700">
                   {client.name}
                 </p>
                 <p className="truncate text-xs text-slate-400">

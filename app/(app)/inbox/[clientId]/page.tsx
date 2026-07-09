@@ -38,7 +38,7 @@ export default async function ConversationPage({
     <div className="mx-auto max-w-3xl">
       <div className="mb-8">
         <p className="text-xs text-slate-400">
-          <Link href="/inbox" className="hover:text-indigo-600">
+          <Link href="/inbox" className="hover:text-brand-600">
             Conversaciones
           </Link>{' '}
           /
@@ -68,7 +68,7 @@ export default async function ConversationPage({
                 <div
                   className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm shadow-sm ${
                     isOutbound
-                      ? 'rounded-br-sm bg-indigo-600 text-white'
+                      ? 'rounded-br-sm bg-brand-600 text-white'
                       : 'rounded-bl-sm border border-slate-200 bg-white text-slate-800'
                   }`}
                 >
@@ -77,7 +77,7 @@ export default async function ConversationPage({
                     <p
                       className={`mt-2 border-t pt-2 text-xs italic ${
                         isOutbound
-                          ? 'border-indigo-500 text-indigo-100'
+                          ? 'border-brand-500 text-brand-100'
                           : 'border-slate-100 text-slate-500'
                       }`}
                     >
@@ -86,7 +86,7 @@ export default async function ConversationPage({
                   )}
                   <div
                     className={`mt-1.5 flex items-center gap-2 text-[10px] ${
-                      isOutbound ? 'text-indigo-200' : 'text-slate-400'
+                      isOutbound ? 'text-brand-200' : 'text-slate-400'
                     }`}
                   >
                     <span>{formatDateTime(msg.created_at)}</span>

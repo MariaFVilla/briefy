@@ -78,14 +78,14 @@ function LearningRow({ learning }: { learning: ClientLearning }) {
         <div className="flex shrink-0 gap-2 text-xs">
           <button
             onClick={() => setEditing(true)}
-            className="text-slate-400 hover:text-indigo-600"
+            className="text-slate-400 hover:text-brand-600"
           >
             Editar
           </button>
           <button
             onClick={handleToggle}
             disabled={pending}
-            className="text-slate-400 hover:text-indigo-600"
+            className="text-slate-400 hover:text-brand-600"
           >
             {learning.active ? 'Desactivar' : 'Activar'}
           </button>

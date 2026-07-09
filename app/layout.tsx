@@ -5,7 +5,7 @@ import './globals.css';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Briefy — El agente de contenido para agencias',
+  title: 'Bitélica Briefs — El agente de contenido para agencias',
   description:
     'Genera las piezas de todos tus clientes cada semana, y tus clientes las aprueban conversando por WhatsApp.',
 };

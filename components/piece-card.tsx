@@ -59,7 +59,7 @@ export function PieceCard({
         {versions.length > 0 && (
           <button
             onClick={() => setShowVersions((v) => !v)}
-            className="text-xs text-slate-400 hover:text-indigo-600"
+            className="text-xs text-slate-400 hover:text-brand-600"
           >
             {showVersions ? 'Ocultar historial' : `Historial (${versions.length})`}
           </button>
@@ -79,7 +79,7 @@ export function PieceCard({
                   setCopyDraft(piece.copy_text);
                   setEditingCopy(true);
                 }}
-                className="text-xs text-slate-400 hover:text-indigo-600"
+                className="text-xs text-slate-400 hover:text-brand-600"
               >
                 Editar
               </button>
@@ -159,7 +159,7 @@ export function PieceCard({
 
         {/* Regenerar con instrucción */}
         {showRegenerate && (
-          <div className="rounded-lg border border-indigo-100 bg-indigo-50/50 p-4">
+          <div className="rounded-lg border border-brand-100 bg-brand-50/50 p-4">
             <label className="label">¿Qué debe cambiar?</label>
             <textarea
               className="input min-h-16"
