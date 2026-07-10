@@ -196,6 +196,23 @@ async function generateBatchForClient(supabase: any, endClientId: string, weekSt
 
   const anthropic = getAnthropicClient();
 
+  // Memoria de contenido: piezas de semanas anteriores para NO repetir
+  // temas ni ángulos (el cliente final nota la repetición en la semana 2).
+  const { data: previousPieces } = await supabase
+    .from('pieces')
+    .select('platform, format, copy_text, content_batches!inner(end_client_id)')
+    .eq('content_batches.end_client_id', endClientId)
+    .neq('batch_id', batchId)
+    .order('created_at', { ascending: false })
+    .limit(12);
+  const recentPieces = (previousPieces ?? []).map(
+    (p: { platform: string; format: string; copy_text: string }) => ({
+      platform: p.platform,
+      format: p.format,
+      excerpt: (p.copy_text ?? '').replace(/\s+/g, ' ').slice(0, 110),
+    })
+  );
+
   // Etapa 1: tendencias (web search) + plan semanal. Una sola llamada corta.
   const planResponse = await anthropic.messages.create({
     model: CLAUDE_MODEL,
@@ -217,6 +234,7 @@ async function generateBatchForClient(supabase: any, endClientId: string, weekSt
           learnings,
           piecesCount,
           weekStart,
+          recentPieces,
         }),
       },
     ],

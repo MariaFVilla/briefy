@@ -62,8 +62,9 @@ export function buildPlanPrompt(params: {
   learnings: string[];
   piecesCount: number;
   weekStart: string;
+  recentPieces: Array<{ platform: string; format: string; excerpt: string }>;
 }): string {
-  const { profile, learnings, piecesCount, weekStart } = params;
+  const { profile, learnings, piecesCount, weekStart, recentPieces } = params;
   return `<perfil>
 ${profileBlock(profile)}
 </perfil>
@@ -72,9 +73,20 @@ ${profileBlock(profile)}
 ${learningsBlock(learnings)}
 </learnings>
 
+<historial_reciente>
+${
+  recentPieces.length
+    ? 'Piezas ya publicadas/generadas en semanas anteriores (NO repitas estos temas ni ángulos):\n' +
+      recentPieces
+        .map((p, i) => `${i + 1}. [${p.platform}/${p.format}] "${p.excerpt}"`)
+        .join('\n')
+    : 'Este es el primer batch del cliente — no hay historial.'
+}
+</historial_reciente>
+
 <instrucciones>
 1. Usa la herramienta de búsqueda web (MÁXIMO 2 búsquedas, sé rápido) para detectar tendencias de esta semana (semana del ${weekStart}) relevantes para el nicho "${profile.businessType}" en las plataformas activas: formatos que funcionan, audios/challenges, fechas conmemorativas de la semana en LATAM.
-2. Diseña el plan semanal: la lista "plan" DEBE contener EXACTAMENTE ${piecesCount} elementos — ni uno más, ni uno menos. Cuenta los elementos antes de responder. Distribuye las piezas entre las plataformas activas del cliente, cada una con un ángulo distinto (que no se repitan temas). Si el negocio da para pocos temas, varía el formato y el enfoque (educativo, promocional, detrás de cámaras, prueba social, urgencia).
+2. Diseña el plan semanal: la lista "plan" DEBE contener EXACTAMENTE ${piecesCount} elementos — ni uno más, ni uno menos. Cuenta los elementos antes de responder. Distribuye las piezas entre las plataformas activas del cliente, cada una con un ángulo distinto (que no se repitan temas). Si el negocio da para pocos temas, varía el formato y el enfoque (educativo, promocional, detrás de cámaras, prueba social, urgencia). REVISA el <historial_reciente>: no repitas temas ni ángulos ya usados en semanas anteriores. En particular, NO vuelvas a usar como hook o tema central un dato/insignia del perfil que ya aparezca en el historial (ej: los años de tradición, la historia del fundador, un premio) — esos datos solo pueden aparecer como detalle secundario. Las promos recurrentes del negocio (ej: un 2x1 semanal) sí pueden volver, pero SIEMPRE con un ángulo o mecánica distinta a la anterior.
 3. Asigna a cada pieza un "objective" (pilar estratégico) y BALANCEA la mezcla de la semana — nunca todas las piezas del mismo pilar:
    - "alcance": que el negocio llegue a gente nueva (tendencias, fechas, contenido compartible).
    - "conexion": comunidad y confianza (historia, detrás de cámaras, prueba social, interacción).
