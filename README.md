@@ -27,9 +27,3 @@ cliente final nunca sabe que Briefy existe.
 (`enforce_internal_approval`), no solo por la UI.
 
 
-Mientras el número no esté verificado, el link web de aprobación (`/approve/[token]`)
-cubre el mismo flujo.
-
-## Estado del proyecto
-
-Ver [PROGRESS.md](PROGRESS.md).
